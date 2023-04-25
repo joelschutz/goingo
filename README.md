@@ -10,7 +10,7 @@ If you wanna play single player, make sure that GNUGo installed on your computer
 
 ### Installation
 
-You can download the latest release of GoinGo from the [Releases page](https://github.com/joelschutz/GoinGo/releases). There are pre-built binaries available for Windows, macOS, and Linux. Alternatively, you can clone the repository and build the game yourself:
+You can download the latest release of GoinGo from the [Releases page](https://github.com/joelschutz/GoinGo/releases). There are pre-built binaries available for Windows and Linux. Alternatively, you can clone the repository and build the game yourself:
 
 ```
 git clone https://github.com/joelschutz/GoinGo.git
@@ -27,8 +27,6 @@ To start a game, run the following command:
 ./goingo-amd64-linux
 // Windows
 ./goingo-amd64.exe
-// MacOs
-./goingo-amd64-darwin
 ```
 
 ## Roadmap
