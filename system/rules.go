@@ -3,6 +3,7 @@ package system
 import (
 	"fmt"
 
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/joelschutz/goingo/component"
 	"github.com/joelschutz/goingo/event"
 	"github.com/yohamta/donburi"
@@ -27,45 +28,59 @@ func NewRuleSystem(ecs *ecs.ECS) *RuleSystem {
 }
 
 func (rs *RuleSystem) HandleInput(w donburi.World, e *event.Interaction) {
-	cell := &rs.board.Pieces[e.Position.X+e.Position.Y*int(rs.configuration.BoardSize)]
-	if *cell == component.EMPTY {
-		// Place stone
-		if rs.board.PlayerTurn == component.BLACK_TURN {
-			*cell = component.BLACK
-		} else {
-			*cell = component.WHITE
-		}
-		// Check for capture
-		_, _, aEnemies := rs.getArmy(e.Position, nil, nil)
-		for _, p := range aEnemies {
-			eLib, eConn, _ := rs.getArmy(p, nil, nil)
-			if len(eLib) == 0 {
-				rs.captureArmy(eConn)
-				// Add this event when PR is merged
-				// event.PointsEvent.Publish(w, &event.Points{
-				// 	Amount: float32(len(eConn)),
-				// 	Target: *cell,
-				// })
-				rs.board.Points[*cell-1] += float32(len(eConn))
-			}
-		}
-		// Check for suicide
-		aLib, _, aEnemies := rs.getArmy(e.Position, nil, nil)
-		if len(aLib) != 0 {
-			// End turn
-			rs.board.PlayerTurn = !rs.board.PlayerTurn
-		} else {
-			*cell = component.EMPTY
-		}
+	if e.Button == ebiten.MouseButtonRight {
+		// Pass turn
+		event.MoveEvent.Publish(w, &event.Move{
+			Position: component.Position{
+				X: -1,
+				Y: -1},
+			Player: rs.board.PlayerTurn,
+		})
+		rs.board.PlayerTurn = !rs.board.PlayerTurn
 	} else {
-		fmt.Println(rs.getArmy(e.Position, nil, nil))
+		cell := &rs.board.Stones[e.Position.X+e.Position.Y*int(rs.configuration.BoardSize)]
+		if *cell == component.EMPTY {
+			// Place stone
+			if rs.board.PlayerTurn == component.BLACK_TURN {
+				*cell = component.BLACK
+			} else {
+				*cell = component.WHITE
+			}
+			// Check for capture
+			_, _, aEnemies := rs.getArmy(e.Position, nil, nil)
+			for _, p := range aEnemies {
+				eLib, eConn, _ := rs.getArmy(p, nil, nil)
+				if len(eLib) == 0 {
+					rs.captureArmy(eConn)
+					event.PointsEvent.Publish(w, &event.Points{
+						Amount: float32(len(eConn)),
+						Target: *cell,
+					})
+					rs.board.Points[*cell-1] += float32(len(eConn))
+				}
+			}
+			// Check for suicide
+			aLib, _, aEnemies := rs.getArmy(e.Position, nil, nil)
+			if len(aLib) != 0 {
+				// End turn
+				event.MoveEvent.Publish(w, &event.Move{
+					Position: e.Position,
+					Player:   rs.board.PlayerTurn,
+				})
+				rs.board.PlayerTurn = !rs.board.PlayerTurn
+			} else {
+				*cell = component.EMPTY
+			}
+		} else {
+			fmt.Println(rs.getArmy(e.Position, nil, nil))
+		}
 	}
 
 }
 
 func (rs *RuleSystem) captureArmy(army []component.Position) {
 	for _, p := range army {
-		rs.board.Pieces[p.X+p.Y*int(rs.configuration.BoardSize)] = component.EMPTY
+		rs.board.Stones[p.X+p.Y*int(rs.configuration.BoardSize)] = component.EMPTY
 	}
 }
 
@@ -142,7 +157,7 @@ func (rs *RuleSystem) cellState(pos component.Position) component.Oponent {
 	if xOut || yOut {
 		return -1
 	}
-	return rs.board.Pieces[pos.X+pos.Y*int(rs.configuration.BoardSize)]
+	return rs.board.Stones[pos.X+pos.Y*int(rs.configuration.BoardSize)]
 }
 
 func (rs *RuleSystem) inArray(pos component.Position, arr []component.Position) bool {
