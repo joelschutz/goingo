@@ -15,7 +15,6 @@ type InputManager struct {
 	bounds        *image.Rectangle
 	cursor        *component.Position
 	configuration *component.ConfigurationData
-	board         *component.BoardState
 }
 
 func NewInputManager(bounds *image.Rectangle) *InputManager {
@@ -26,13 +25,8 @@ func NewInputManager(bounds *image.Rectangle) *InputManager {
 
 func (im *InputManager) Update(ecs *ecs.ECS) {
 	if im.cursor == nil {
-		cursor := ecs.World.Create(component.PositionComponent)
-		im.cursor = component.PositionComponent.Get(ecs.World.Entry(cursor))
-	}
-
-	if im.board == nil {
-		if entry, ok := component.Board.First(ecs.World); ok {
-			im.board = component.Board.Get(entry)
+		if entry, ok := component.PositionComponent.First(ecs.World); ok {
+			im.cursor = component.PositionComponent.Get(entry)
 		}
 	}
 
