@@ -15,7 +15,7 @@ const (
 )
 
 type BoardState struct {
-	Pieces     []Oponent
+	Stones     []Oponent
 	Points     [2]float32
 	PlayerTurn Turn
 }

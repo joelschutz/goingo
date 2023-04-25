@@ -1,9 +1,15 @@
 package component
 
-import "github.com/yohamta/donburi"
+import (
+	"io/fs"
+
+	"github.com/yohamta/donburi"
+)
 
 type ConfigurationData struct {
-	BoardSize uint
+	BoardSize int
+	AIEnabled bool
+	Assets    fs.FS
 }
 
 var Configuration = donburi.NewComponentType[ConfigurationData](

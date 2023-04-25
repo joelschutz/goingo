@@ -44,6 +44,7 @@ func NewUIRender(bounds *image.Rectangle) *UIRender {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	return &UIRender{
 		bounds: bounds,
 	}
@@ -77,4 +78,5 @@ func (r *UIRender) Draw(ecs *ecs.ECS, screen *ebiten.Image) {
 			text.Draw(screen, fmt.Sprint(amount), mplusNormalFont, int(x*cellSize)-fontSize/4, int(y*cellSize)+fontSize/4, color.Black)
 		}
 	}
+
 }
