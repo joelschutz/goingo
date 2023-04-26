@@ -39,6 +39,7 @@ func (r *MenuRender) Draw(ecs *ecs.ECS, screen *ebiten.Image) {
 			r.configuration = component.Configuration.Get(entry)
 		}
 	}
-
-	r.GameUI.Draw(screen)
+	if r.GameUI != nil {
+		r.GameUI.Draw(screen)
+	}
 }

@@ -4,11 +4,15 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"log"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/hajimehoshi/ebiten/v2/vector"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/opentype"
 
 	"github.com/joelschutz/goingo/component"
 	"github.com/joelschutz/goingo/util"
@@ -19,6 +23,11 @@ const (
 	ALPHABET = "ABCDEFGHJKLMNOPQRSTUVWXYZ"
 )
 
+var (
+	mplusNormalFont font.Face
+	fontSize        = 24
+)
+
 type BoardRender struct {
 	board         *component.BoardState
 	bounds        *image.Rectangle
@@ -27,6 +36,20 @@ type BoardRender struct {
 }
 
 func NewRender(bounds *image.Rectangle) *BoardRender {
+	tt, err := opentype.Parse(fonts.MPlus1pRegular_ttf)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	const dpi = 72
+	mplusNormalFont, err = opentype.NewFace(tt, &opentype.FaceOptions{
+		Size:    float64(fontSize),
+		DPI:     dpi,
+		Hinting: font.HintingVertical,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
 	return &BoardRender{
 		bounds: bounds,
 	}
@@ -53,6 +76,12 @@ func (r *BoardRender) Draw(ecs *ecs.ECS, screen *ebiten.Image) {
 
 	boardSize := float32(math.Min(float64(r.bounds.Dx()), float64(r.bounds.Dy())))
 	cellSize := boardSize / float32(r.configuration.BoardSize+1)
+	clrLines := util.DARK_GREY
+	clrOutine := color.Black
+	if r.configuration.DarkMode {
+		clrLines = util.GREY
+		clrOutine = color.White
+	}
 
 	// Draw Grid Lines
 	for i := 0; i < int(r.configuration.BoardSize); i++ {
@@ -63,7 +92,7 @@ func (r *BoardRender) Draw(ecs *ecs.ECS, screen *ebiten.Image) {
 			float32(i+1)*cellSize,
 			boardSize-cellSize,
 			2,
-			util.GREY,
+			clrLines,
 			true,
 		)
 		vector.StrokeLine(
@@ -73,7 +102,7 @@ func (r *BoardRender) Draw(ecs *ecs.ECS, screen *ebiten.Image) {
 			boardSize-cellSize,
 			float32(i+1)*cellSize,
 			2,
-			util.GREY,
+			clrLines,
 			true,
 		)
 	}
@@ -86,7 +115,7 @@ func (r *BoardRender) Draw(ecs *ecs.ECS, screen *ebiten.Image) {
 			boardSize/2,
 			boardSize/2,
 			5,
-			util.GREY,
+			clrLines,
 			true,
 		)
 
@@ -102,7 +131,7 @@ func (r *BoardRender) Draw(ecs *ecs.ECS, screen *ebiten.Image) {
 			(offset+1)*cellSize,
 			(offset+1)*cellSize,
 			5,
-			util.GREY,
+			clrLines,
 			true,
 		)
 		vector.DrawFilledCircle(
@@ -110,7 +139,7 @@ func (r *BoardRender) Draw(ecs *ecs.ECS, screen *ebiten.Image) {
 			(offset+1)*cellSize,
 			(float32(sections-1)*offset+1)*cellSize,
 			5,
-			util.GREY,
+			clrLines,
 			true,
 		)
 		vector.DrawFilledCircle(
@@ -118,7 +147,7 @@ func (r *BoardRender) Draw(ecs *ecs.ECS, screen *ebiten.Image) {
 			(float32(sections-1)*offset+1)*cellSize,
 			(float32(sections-1)*offset+1)*cellSize,
 			5,
-			util.GREY,
+			clrLines,
 			true,
 		)
 		vector.DrawFilledCircle(
@@ -126,7 +155,7 @@ func (r *BoardRender) Draw(ecs *ecs.ECS, screen *ebiten.Image) {
 			(float32(sections-1)*offset+1)*cellSize,
 			(offset+1)*cellSize,
 			5,
-			util.GREY,
+			clrLines,
 			true,
 		)
 
@@ -137,7 +166,7 @@ func (r *BoardRender) Draw(ecs *ecs.ECS, screen *ebiten.Image) {
 				(offset+1)*cellSize,
 				(float32(sections/2)*offset+1)*cellSize,
 				5,
-				util.GREY,
+				clrLines,
 				true,
 			)
 			vector.DrawFilledCircle(
@@ -145,7 +174,7 @@ func (r *BoardRender) Draw(ecs *ecs.ECS, screen *ebiten.Image) {
 				(float32(sections/2)*offset+1)*cellSize,
 				(offset+1)*cellSize,
 				5,
-				util.GREY,
+				clrLines,
 				true,
 			)
 			vector.DrawFilledCircle(
@@ -153,7 +182,7 @@ func (r *BoardRender) Draw(ecs *ecs.ECS, screen *ebiten.Image) {
 				(float32(sections/2)*offset+1)*cellSize,
 				(float32(sections-1)*offset+1)*cellSize,
 				5,
-				util.GREY,
+				clrLines,
 				true,
 			)
 			vector.DrawFilledCircle(
@@ -161,7 +190,7 @@ func (r *BoardRender) Draw(ecs *ecs.ECS, screen *ebiten.Image) {
 				(float32(sections-1)*offset+1)*cellSize,
 				(float32(sections/2)*offset+1)*cellSize,
 				5,
-				util.GREY,
+				clrLines,
 				true,
 			)
 		}
@@ -186,11 +215,14 @@ func (r *BoardRender) Draw(ecs *ecs.ECS, screen *ebiten.Image) {
 		case component.WHITE:
 			vector.DrawFilledCircle(screen, x*cellSize, y*cellSize, cellSize/2, color.White, true)
 		}
+		if pos != component.EMPTY {
+			vector.StrokeCircle(screen, x*cellSize, y*cellSize, cellSize/2, 2, clrOutine, true)
+		}
 	}
 
 	// Draw Labels
 	for i := int(r.configuration.BoardSize); i > 0; i-- {
-		text.Draw(screen, fmt.Sprint((r.configuration.BoardSize+1)-i), mplusNormalFont, int(boardSize-cellSize*2/3), int(float32(i)*cellSize)+fontSize/4, color.Black)
-		text.Draw(screen, fmt.Sprintf("%c", ALPHABET[i-1]), mplusNormalFont, int(float32(i)*cellSize)-fontSize/4, int(boardSize-cellSize/2), color.Black)
+		text.Draw(screen, fmt.Sprint((r.configuration.BoardSize+1)-i), mplusNormalFont, int(boardSize-cellSize*2/3), int(float32(i)*cellSize)+fontSize/4, clrLines)
+		text.Draw(screen, fmt.Sprintf("%c", ALPHABET[i-1]), mplusNormalFont, int(float32(i)*cellSize)-fontSize/4, int(boardSize-cellSize/2), clrLines)
 	}
 }

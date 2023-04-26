@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	_ "image/png"
+	"io"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/joelschutz/goingo/component"
@@ -11,6 +13,7 @@ import (
 	"github.com/joelschutz/goingo/system"
 	"github.com/joelschutz/goingo/util"
 	"github.com/joelschutz/goingo/widgets"
+	"github.com/pkg/browser"
 	"github.com/yohamta/donburi"
 	"github.com/yohamta/donburi/ecs"
 	"github.com/yohamta/furex/v2"
@@ -28,6 +31,7 @@ func (g *MenuScene) Unload() donburi.World {
 }
 
 func (g *MenuScene) Load(w donburi.World, sm *util.SceneManager[donburi.World]) {
+	// furex.Debug = true
 	g.sm = sm
 	g.bounds = image.Rectangle{}
 
@@ -43,49 +47,36 @@ func (g *MenuScene) Load(w donburi.World, sm *util.SceneManager[donburi.World]) 
 		g.AINotFound = true
 		conf.AIEnabled = false
 	}
-	// event.MoveEvent.Subscribe(g.ecs.World, ai.HandleMove)
-	fontS := widgets.GetDefaultFont(18)
-	fontL := widgets.GetDefaultFont(32)
+
+	// Load Fonts
+	ff, err := conf.Assets.Open("assets/DejaVuSansCondensed.ttf")
+	if err != nil {
+		panic(err)
+	}
+	fFile, err := io.ReadAll(ff)
+	if err != nil {
+		panic(err)
+	}
+	fontFace := widgets.GetFont(24, fFile)
+
+	// Load Images
+	iLogo, _, err := util.LoadImage("assets/logo.png", conf.Assets)
+	if err != nil {
+		panic(err)
+	}
+	iBulb, _, err := util.LoadImage("assets/icons8-idea-60.png", conf.Assets)
+	if err != nil {
+		panic(err)
+	}
+	iGithub, _, err := util.LoadImage("assets/icons8-github-60.png", conf.Assets)
+	if err != nil {
+		panic(err)
+	}
+	iItch, _, err := util.LoadImage("assets/icons8-itch-io-60.png", conf.Assets)
 
 	ui := system.NewMenuRender(&g.bounds,
 		func(r *system.MenuRender) {
-			colors := []color.Color{
-				color.RGBA{0x59, 0x98, 0x1a, 0xff},
-				color.RGBA{0x81, 0xb6, 0x22, 0xff},
-				util.GREY,
-			}
-			actions := []func(){
-				func() {
-					var sel int
-					for i, v := range SizeOptions {
-						if v == conf.BoardSize {
-							sel = i + 1
-							break
-						}
-					}
-					if sel == len(SizeOptions) {
-						sel = 0
-					}
-					conf.BoardSize = SizeOptions[sel]
-				},
-				func() {
-					if !g.AINotFound {
-						conf.AIEnabled = !conf.AIEnabled
-					}
-				},
-				func() { g.sm.Load(&GameScene{}) },
-			}
-			texts := []func() string{
-				func() string { return fmt.Sprintf("Size x%d", conf.BoardSize) },
-				func() string {
-					opp := "Player"
-					if conf.AIEnabled {
-						opp = "AI"
-					}
-					return fmt.Sprintf("vs%s", opp)
-				},
-				func() string { return "Play" },
-			}
+			// Create UI
 			r.GameUI = &furex.View{
 				Width:        r.Bounds.Dx(),
 				Height:       r.Bounds.Dy(),
@@ -95,48 +86,143 @@ func (g *MenuScene) Load(w donburi.World, sm *util.SceneManager[donburi.World]) 
 				AlignContent: furex.AlignContentCenter,
 				Wrap:         furex.Wrap,
 			}
+
+			// Add Logo
 			r.GameUI.AddChild(&furex.View{
 				Width:        500,
 				Height:       100,
 				MarginBottom: 100,
 				MarginTop:    100,
-				Handler: &widgets.Label{
-					Box:  widgets.Box{colors[len(colors)-1]},
-					Text: "GoinGo",
-					Font: fontL,
+				Handler: &widgets.Sprite{
+					Image:    iLogo,
+					Scale:    1,
+					Inverted: func() bool { return conf.DarkMode },
 				},
 			})
-			menu := &furex.View{
-				Direction:    furex.Row,
-				AlignItems:   furex.AlignItemCenter,
-				Justify:      furex.JustifyCenter,
-				Width:        600,
-				Grow:         1,
-				Shrink:       1,
-				MarginBottom: 100,
-			}
-			r.GameUI.AddChild(menu)
 
-			for i := 0; i < 3; i++ {
-				menu.AddChild(&furex.View{
-					Height: 200,
-					Shrink: 1,
-					Grow:   1,
-					Handler: &widgets.Button{
-						Action: actions[i],
-						Label: widgets.Label{
-							Box:      widgets.Box{colors[i%len(colors)]},
-							TextFunc: texts[i],
-							Font:     fontS,
-						},
+			// Add Menu
+			{
+				pColors := []color.Color{
+					color.White,
+					color.White,
+
+					color.Black,
+				}
+				sColors := []color.Color{
+					color.Black,
+					color.Black,
+
+					color.White,
+				}
+				actions := []func(){
+					func() {
+						var sel int
+						for i, v := range SizeOptions {
+							if v == conf.BoardSize {
+								sel = i + 1
+								break
+							}
+						}
+						if sel == len(SizeOptions) {
+							sel = 0
+						}
+						conf.BoardSize = SizeOptions[sel]
 					},
-				})
+					func() {
+						if !g.AINotFound {
+							conf.AIEnabled = !conf.AIEnabled
+						}
+					},
+					func() { g.sm.Load(&GameScene{}) },
+				}
+				texts := []func() string{
+					func() string { return fmt.Sprintf("Size x%d", conf.BoardSize) },
+					func() string {
+						opp := "Player"
+						if conf.AIEnabled {
+							opp = "AI"
+						}
+						return fmt.Sprintf("vs%s", opp)
+					},
+
+					func() string { return "Play" },
+				}
+				menu := &furex.View{
+					Direction:    furex.Row,
+					AlignItems:   furex.AlignItemCenter,
+					Justify:      furex.JustifyCenter,
+					Width:        600,
+					Grow:         1,
+					Shrink:       1,
+					MarginBottom: 100,
+				}
+				r.GameUI.AddChild(menu)
+
+				for i := 0; i < 3; i++ {
+					menu.AddChild(&furex.View{
+						Height: 100,
+						Shrink: 1,
+						Grow:   1,
+						Handler: &widgets.LabelButton{
+							Action: actions[i],
+							Label: widgets.Label{
+								Box: widgets.Box{
+									PColor:   pColors[i%len(pColors)],
+									SColor:   sColors[i%len(sColors)],
+									Inverted: func() bool { return conf.DarkMode },
+								},
+								TextFunc: texts[i],
+								Font:     fontFace,
+							},
+						},
+					})
+				}
 			}
+
+			// Add Footer
+			{
+				actions := []func(){
+					func() { browser.OpenURL("https://github.com/joelschutz/goingo") },
+					func() { browser.OpenURL("https://kam1sama.itch.io/goingo") },
+					func() { conf.DarkMode = !conf.DarkMode },
+				}
+				imgs := []image.Image{
+					iGithub,
+					iItch,
+					iBulb,
+				}
+				footer := &furex.View{
+					Direction:    furex.Row,
+					AlignContent: furex.AlignContentEnd,
+					Justify:      furex.JustifySpaceAround,
+					Height:       50,
+					Width:        r.Bounds.Dx(),
+					MarginBottom: 50,
+				}
+				r.GameUI.AddChild(footer)
+
+				for i := 0; i < 3; i++ {
+
+					footer.AddChild(&furex.View{
+						Width: 100,
+						Handler: &widgets.SpriteButton{
+							Action: actions[i],
+							Sprite: widgets.Sprite{
+								Inverted: func() bool { return conf.DarkMode },
+								Image:    imgs[i],
+								Scale:    1,
+							},
+						},
+					})
+
+				}
+			}
+
 		},
 	)
 	g.ecs.
 		AddSystem(ui.Update).
-		AddRenderer(layers.LayerBackground, system.DrawBackground).
+		AddRenderer(layers.LayerBackground, system.Background.DrawBackground).
 		AddRenderer(layers.LayerUI, ui.Draw)
 }
 

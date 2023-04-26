@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg18"
+   inkscape:export-filename="logo.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   sodipodi:docname="logo.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview20"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="true"
+     inkscape:zoom="0.99654638"
+     inkscape:cx="375.29613"
+     inkscape:cy="422.45901"
+     inkscape:window-width="960"
+     inkscape:window-height="957"
+     inkscape:window-x="960"
+     inkscape:window-y="567"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid603" />
+  </sodipodi:namedview>
+  <defs
+     id="defs15">
+    <rect
+       x="88.235601"
+       y="168.54074"
+       width="121.00031"
+       height="91.699889"
+       id="rect126" />
+    <rect
+       x="88.235603"
+       y="168.54074"
+       width="121.00031"
+       height="91.69989"
+       id="rect126-7" />
+  </defs>
+  <g
+     inkscape:label="Camada 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <circle
+       style="fill:#000000;stroke-width:0.264583"
+       id="path444"
+       cx="68.639992"
+       cy="64.189491"
+       r="24.621155" />
+    <text
+       xml:space="preserve"
+       transform="matrix(0.36372625,0,0,0.36372625,17.727849,-11.788873)"
+       id="text124"
+       style="font-size:74.6667px;white-space:pre;shape-inside:url(#rect126);fill:#ffffff;-inkscape-font-specification:'DejaVu Sans Ultra-Light';font-family:'DejaVu Sans';font-weight:200;font-style:normal;font-stretch:normal;font-variant:normal"><tspan
+         x="88.236328"
+         y="234.60355"
+         id="tspan474">Go</tspan></text>
+    <circle
+       style="fill:#ffffff;stroke:#000000;stroke-width:0.264583"
+       id="path444-9"
+       cx="134.45363"
+       cy="64.095604"
+       r="24.621155" />
+    <text
+       xml:space="preserve"
+       transform="matrix(0.36372625,0,0,0.36372625,83.541464,-11.882756)"
+       id="text124-2"
+       style="font-size:74.6667px;white-space:pre;shape-inside:url(#rect126-7);display:inline;fill:#000000"><tspan
+         x="88.236328"
+         y="234.60355"
+         id="tspan478"><tspan
+           style="font-weight:200;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans Ultra-Light'"
+           id="tspan476">Go</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:19.7556px;font-family:'DejaVu Serif';-inkscape-font-specification:'DejaVu Serif';fill:#000000;stroke-width:0.264583"
+       x="104.31001"
+       y="66.812294"
+       id="text607"><tspan
+         sodipodi:role="line"
+         id="tspan605"
+         style="stroke-width:0.264583;fill:#000000"
+         x="104.31001"
+         y="66.812294" /></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.1111px;font-family:'DejaVu Serif';-inkscape-font-specification:'DejaVu Serif';fill:#000000;stroke-width:0.264583"
+       x="95.003296"
+       y="69.582603"
+       id="text711"><tspan
+         sodipodi:role="line"
+         id="tspan709"
+         style="font-style:normal;font-variant:normal;font-weight:200;font-stretch:normal;font-size:14.1111px;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans Ultra-Light';stroke-width:0.264583"
+         x="95.003296"
+         y="69.582603">in</tspan></text>
+  </g>
+</svg>

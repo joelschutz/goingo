@@ -34,7 +34,6 @@ func main() {
 		component.Configuration,
 		component.ConfigurationData{
 			BoardSize: _boardSize,
-			AIEnabled: true,
 			Assets:    _assets,
 		},
 	)

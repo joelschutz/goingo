@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"image"
+	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/audio"
@@ -10,9 +12,11 @@ import (
 	"github.com/joelschutz/goingo/layers"
 	"github.com/joelschutz/goingo/system"
 	"github.com/joelschutz/goingo/util"
+	"github.com/joelschutz/goingo/widgets"
 	"github.com/yohamta/donburi"
 	"github.com/yohamta/donburi/ecs"
 	"github.com/yohamta/donburi/features/events"
+	"github.com/yohamta/furex/v2"
 )
 
 type GameScene struct {
@@ -33,23 +37,100 @@ func (g *GameScene) Load(w donburi.World, sm *util.SceneManager[donburi.World]) 
 	conf := component.Configuration.Get(entry)
 	boardSize := conf.BoardSize
 	assets := conf.Assets
+	w, board := spawnWorld(w, boardSize)
 
-	g.ecs = ecs.NewECS(spawnWorld(w, boardSize))
+	g.ecs = ecs.NewECS(w)
 
 	rules := system.NewRuleSystem(g.ecs)
 	event.InteractionEvent.Subscribe(g.ecs.World, rules.HandleInput)
 
+	// Load Sounds
 	sound := system.NewAudioPlayer(assets, audio.NewContext(48000))
 	event.MoveEvent.Subscribe(g.ecs.World, sound.HandleMove)
 	event.PointsEvent.Subscribe(g.ecs.World, sound.HandleCapture)
 
-	ai, _ := system.NewAIConn(g.ecs, boardSize)
-	event.MoveEvent.Subscribe(g.ecs.World, ai.HandleMove)
+	// Load Images
+	iBulb, _, err := util.LoadImage("assets/icons8-idea-60.png", conf.Assets)
+	if err != nil {
+		panic(err)
+	}
+
+	// Load AI
+	ai, err := system.NewAIConn(g.ecs, boardSize)
+	if err == nil {
+		event.MoveEvent.Subscribe(g.ecs.World, ai.HandleMove)
+	}
+
+	ui := system.NewMenuRender(&g.bounds,
+		func(r *system.MenuRender) {
+			// Create UI
+			r.GameUI = &furex.View{
+				Width:     r.Bounds.Dx(),
+				Height:    r.Bounds.Dy(),
+				Direction: furex.Column,
+				Justify:   furex.JustifyStart,
+				Wrap:      furex.Wrap,
+			}
+
+			// Add Header
+			header := &furex.View{
+				Grow:      1,
+				Justify:   furex.JustifyStart,
+				MarginTop: 10,
+			}
+			header.AddChild(&furex.View{
+				Width: 90,
+				Handler: &widgets.Label{
+					Box: widgets.Box{
+						PColor:   color.Black,
+						SColor:   color.White,
+						Inverted: func() bool { return false },
+					},
+					Font: widgets.GetDefaultFont(18),
+					TextFunc: func() string {
+						return fmt.Sprint(board.Points[0])
+					},
+				},
+			})
+			header.AddChild(&furex.View{
+				Width: 90,
+				Handler: &widgets.Label{
+					Box: widgets.Box{
+						PColor:   color.White,
+						SColor:   color.Black,
+						Inverted: func() bool { return false },
+					},
+					Font: widgets.GetDefaultFont(18),
+					TextFunc: func() string {
+						return fmt.Sprint(board.Points[1])
+					},
+				},
+			})
+			header.AddChild(&furex.View{Grow: 1})
+			header.AddChild(&furex.View{
+				Width: 90,
+				Handler: &widgets.SpriteButton{
+					Action: func() { conf.DarkMode = !conf.DarkMode },
+					Sprite: widgets.Sprite{
+						Inverted: func() bool { return conf.DarkMode },
+						Image:    iBulb,
+						Scale:    1,
+					},
+				},
+			})
+			r.GameUI.AddChild(header)
+
+			// Add Board
+			r.GameUI.AddChild(&furex.View{
+				Grow: float64(conf.BoardSize + 5),
+			})
+		})
 	g.ecs.
+		AddSystem(ui.Update).
 		AddSystem(system.NewInputManager(&g.bounds).Update).
-		AddRenderer(layers.LayerBackground, system.DrawBackground).
+		AddRenderer(layers.LayerBackground, system.Background.DrawBackground).
 		AddRenderer(layers.LayerBoard, system.NewRender(&g.bounds).Draw).
-		AddRenderer(layers.LayerUI, system.NewUIRender(&g.bounds).Draw)
+		AddRenderer(layers.LayerUI, ui.Draw)
 }
 
 func (g *GameScene) Update() error {
@@ -70,7 +151,7 @@ func (g *GameScene) Layout(width, height int) (int, int) {
 	return width, height
 }
 
-func spawnWorld(world donburi.World, boardSize int) donburi.World {
+func spawnWorld(world donburi.World, boardSize int) (donburi.World, *component.BoardState) {
 	board := world.Entry(world.Create(component.Board))
 	donburi.SetValue(
 		board,
@@ -80,5 +161,5 @@ func spawnWorld(world donburi.World, boardSize int) donburi.World {
 		})
 	world.Create(component.PositionComponent)
 
-	return world
+	return world, component.Board.Get(board)
 }
