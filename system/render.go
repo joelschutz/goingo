@@ -77,10 +77,10 @@ func (r *BoardRender) Draw(ecs *ecs.ECS, screen *ebiten.Image) {
 	boardSize := float32(math.Min(float64(r.bounds.Dx()), float64(r.bounds.Dy())))
 	cellSize := boardSize / float32(r.configuration.BoardSize+1)
 	clrLines := util.DARK_GREY
-	clrOutine := color.Black
+	clrOutline := color.Black
 	if r.configuration.DarkMode {
 		clrLines = util.GREY
-		clrOutine = color.White
+		clrOutline = color.White
 	}
 
 	// Draw Grid Lines
@@ -216,7 +216,7 @@ func (r *BoardRender) Draw(ecs *ecs.ECS, screen *ebiten.Image) {
 			vector.DrawFilledCircle(screen, x*cellSize, y*cellSize, cellSize/2, color.White, true)
 		}
 		if pos != component.EMPTY {
-			vector.StrokeCircle(screen, x*cellSize, y*cellSize, cellSize/2, 2, clrOutine, true)
+			vector.StrokeCircle(screen, x*cellSize, y*cellSize, cellSize/2, 2, clrOutline, true)
 		}
 	}
 
@@ -224,5 +224,35 @@ func (r *BoardRender) Draw(ecs *ecs.ECS, screen *ebiten.Image) {
 	for i := int(r.configuration.BoardSize); i > 0; i-- {
 		text.Draw(screen, fmt.Sprint((r.configuration.BoardSize+1)-i), mplusNormalFont, int(boardSize-cellSize*2/3), int(float32(i)*cellSize)+fontSize/4, clrLines)
 		text.Draw(screen, fmt.Sprintf("%c", ALPHABET[i-1]), mplusNormalFont, int(float32(i)*cellSize)-fontSize/4, int(boardSize-cellSize/2), clrLines)
+	}
+
+	// Draw Last Move
+	if r.board.LastMove != nil {
+		cell := r.board.Stones[r.board.LastMove.Y*r.configuration.BoardSize+r.board.LastMove.X]
+		clr := color.Black
+		if cell == component.BLACK {
+			clr = color.White
+		}
+		vector.StrokeCircle(screen, float32(r.board.LastMove.X+1)*cellSize, float32(r.board.LastMove.Y+1)*cellSize, cellSize/4, 2, clr, true)
+	}
+
+	// Draw Helpers
+	for _, lib := range r.board.HLiberties {
+		clr := clrLines
+		if len(r.board.HLiberties) == 1 {
+			clr = util.RED
+		}
+		vector.DrawFilledCircle(screen, float32(lib.X+1)*cellSize, float32(lib.Y+1)*cellSize, cellSize/10, clr, true)
+	}
+	for _, pc := range r.board.HGroup {
+		cell := r.board.Stones[pc.Y*r.configuration.BoardSize+pc.X]
+		clr := color.Black
+		if cell == component.BLACK {
+			clr = color.White
+		}
+		vector.DrawFilledCircle(screen, float32(pc.X+1)*cellSize, float32(pc.Y+1)*cellSize, cellSize/10, clr, true)
+	}
+	for _, enn := range r.board.HEnemies {
+		vector.DrawFilledCircle(screen, float32(enn.X+1)*cellSize, float32(enn.Y+1)*cellSize, cellSize/10, util.RED, true)
 	}
 }

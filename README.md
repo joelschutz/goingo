@@ -32,9 +32,10 @@ To start a game, run the following command:
 ## Roadmap
  - ~~Finish main Menu~~
  - Improve board ui
-   - Show Last move
+   - ~~Show Last move~~
    - ~~Show points better~~
-   - Add helpers for liberties, hints and Atari
+   - ~~Add helpers for liberties, hints and Atari~~
+   - Make it look pretty
  - Add endgame behaviour
  - Allow human player to start as white
  - Add Handcap

@@ -1,8 +1,6 @@
 package system
 
 import (
-	"fmt"
-
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/joelschutz/goingo/component"
 	"github.com/joelschutz/goingo/event"
@@ -36,6 +34,10 @@ func (rs *RuleSystem) HandleInput(w donburi.World, e *event.Interaction) {
 				Y: -1},
 			Player: rs.board.PlayerTurn,
 		})
+		rs.board.HGroup = nil
+		rs.board.HLiberties = nil
+		rs.board.HEnemies = nil
+		rs.board.JustPassed = true
 		rs.board.PlayerTurn = !rs.board.PlayerTurn
 	} else {
 		cell := &rs.board.Stones[e.Position.X+e.Position.Y*int(rs.configuration.BoardSize)]
@@ -47,9 +49,9 @@ func (rs *RuleSystem) HandleInput(w donburi.World, e *event.Interaction) {
 				*cell = component.WHITE
 			}
 			// Check for capture
-			_, _, aEnemies := rs.getArmy(e.Position, nil, nil)
+			_, _, aEnemies := rs.getArmy(e.Position, nil, nil, nil)
 			for _, p := range aEnemies {
-				eLib, eConn, _ := rs.getArmy(p, nil, nil)
+				eLib, eConn, _ := rs.getArmy(p, nil, nil, nil)
 				if len(eLib) == 0 {
 					rs.captureArmy(eConn)
 					event.PointsEvent.Publish(w, &event.Points{
@@ -60,19 +62,25 @@ func (rs *RuleSystem) HandleInput(w donburi.World, e *event.Interaction) {
 				}
 			}
 			// Check for suicide
-			aLib, _, aEnemies := rs.getArmy(e.Position, nil, nil)
+			aLib, _, aEnemies := rs.getArmy(e.Position, nil, nil, nil)
 			if len(aLib) != 0 {
 				// End turn
 				event.MoveEvent.Publish(w, &event.Move{
 					Position: e.Position,
 					Player:   rs.board.PlayerTurn,
 				})
+
+				rs.board.LastMove = &e.Position
+				rs.board.HGroup = nil
+				rs.board.HLiberties = nil
+				rs.board.HEnemies = nil
+				rs.board.JustPassed = false
 				rs.board.PlayerTurn = !rs.board.PlayerTurn
 			} else {
 				*cell = component.EMPTY
 			}
 		} else {
-			fmt.Println(rs.getArmy(e.Position, nil, nil))
+			rs.board.HLiberties, rs.board.HGroup, rs.board.HEnemies = rs.getArmy(e.Position, nil, nil, nil)
 		}
 	}
 
@@ -84,7 +92,7 @@ func (rs *RuleSystem) captureArmy(army []component.Position) {
 	}
 }
 
-func (rs *RuleSystem) getArmy(pos component.Position, liberties, connections []component.Position) (lib, conn, enemies []component.Position) {
+func (rs *RuleSystem) getArmy(pos component.Position, liberties, connections, enemies []component.Position) (lib, conn, enn []component.Position) {
 	targetColor := rs.cellState(pos)
 
 	if liberties == nil {
@@ -94,8 +102,9 @@ func (rs *RuleSystem) getArmy(pos component.Position, liberties, connections []c
 		connections = make([]component.Position, 0)
 	}
 	connections = append(connections, pos)
-	enemies = make([]component.Position, 0)
-
+	if enemies == nil {
+		enemies = make([]component.Position, 0)
+	}
 	if targetColor > component.EMPTY {
 		// Cell names
 		// |  |v1|  |
@@ -108,7 +117,7 @@ func (rs *RuleSystem) getArmy(pos component.Position, liberties, connections []c
 				liberties = append(liberties, p1)
 			}
 		} else if v1 == targetColor && !rs.inArray(p1, connections) {
-			liberties, connections, _ = rs.getArmy(p1, liberties, connections)
+			liberties, connections, enemies = rs.getArmy(p1, liberties, connections, enemies)
 		} else if v1 == rs.oponentStone(targetColor) {
 			enemies = append(enemies, p1)
 		}
@@ -119,7 +128,7 @@ func (rs *RuleSystem) getArmy(pos component.Position, liberties, connections []c
 				liberties = append(liberties, p2)
 			}
 		} else if v2 == targetColor && !rs.inArray(p2, connections) {
-			liberties, connections, _ = rs.getArmy(p2, liberties, connections)
+			liberties, connections, enemies = rs.getArmy(p2, liberties, connections, enemies)
 		} else if v2 == rs.oponentStone(targetColor) {
 			enemies = append(enemies, p2)
 		}
@@ -130,7 +139,7 @@ func (rs *RuleSystem) getArmy(pos component.Position, liberties, connections []c
 				liberties = append(liberties, p3)
 			}
 		} else if v3 == targetColor && !rs.inArray(p3, connections) {
-			liberties, connections, _ = rs.getArmy(p3, liberties, connections)
+			liberties, connections, enemies = rs.getArmy(p3, liberties, connections, enemies)
 		} else if v3 == rs.oponentStone(targetColor) {
 			enemies = append(enemies, p3)
 		}
@@ -141,7 +150,7 @@ func (rs *RuleSystem) getArmy(pos component.Position, liberties, connections []c
 				liberties = append(liberties, p4)
 			}
 		} else if v4 == targetColor && !rs.inArray(p4, connections) {
-			liberties, connections, _ = rs.getArmy(p4, liberties, connections)
+			liberties, connections, enemies = rs.getArmy(p4, liberties, connections, enemies)
 		} else if v4 == rs.oponentStone(targetColor) {
 			enemies = append(enemies, p4)
 		}

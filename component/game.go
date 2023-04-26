@@ -18,6 +18,11 @@ type BoardState struct {
 	Stones     []Oponent
 	Points     [2]float32
 	PlayerTurn Turn
+	JustPassed bool
+	LastMove   *Position
+	HLiberties []Position
+	HGroup     []Position
+	HEnemies   []Position
 }
 
 var Board = donburi.NewComponentType[BoardState]()
